@@ -42,15 +42,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Base\Encodec.cs" />
     <Compile Include="Base\Decodec.cs" />
     <Compile Include="Base\Factory.cs" />
-    <Compile Include="Decodecs\DateTimeImpl.cs" />
-    <Compile Include="Decodecs\DecodecImpl.cs" />
+    <Compile Include="Codecs\DateTimeImpl.cs" />
+    <Compile Include="Codecs\CodecImpl.cs" />
     <Compile Include="Demo\P.cs" />
     <Compile Include="Demo\S.cs" />
     <Compile Include="JsonType\JsonAttribute.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="JsonType\Node.cs" />
+    <Compile Include="Utils\StringUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

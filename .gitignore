@@ -5,3 +5,5 @@
 /JsonUtil/bin/Debug
 /.vs/JsonUtil/v15
 /JsonUtil/obj/Debug
+/JsonUtil/obj/Release
+/JsonUtil/JsonType/Node.cs
