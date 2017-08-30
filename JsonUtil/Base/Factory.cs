@@ -30,20 +30,19 @@ namespace JsonUtil.Base
             else if (typeof(T) == typeof(Decodec))
             {
                 _decodecs.TryGetValue(_type, out _codec);
-            }else
+            }
+            else
             {
                 throw new InvalidOperationException("Unsupport return type[" + typeof(T) + "]");
             }
 
-            if (_codec == null)
-            {
-                throw new InvalidOperationException("Unsupport type[" + type.Name + "]");
-            }
-            return (T)_codec;
+            return (T)(_codec??throw new InvalidOperationException("Not found type[" + type.Name + "]"));
         }
 
-        public void Builder<T>(object _codec)
+        public void Builder<T>(object codec)
         {
+            object _codec = codec ?? throw new ArgumentNullException(nameof(codec));
+
             if (_codec is Decodec)
             {
                 _decodecs[typeof(T)] = (Decodec)_codec;
@@ -67,7 +66,7 @@ namespace JsonUtil.Base
             // null
             if (obj == null)
             {
-                return "{}";
+                throw new ArgumentNullException(nameof(obj));
             }
 
             string r = "{";
@@ -85,7 +84,7 @@ namespace JsonUtil.Base
                             .MakeGenericMethod(prop.PropertyType)
                             .Invoke(this, new object[] { impl });
                 }
-                
+
                 if (prop.PropertyType.IsArray
                     && (prop.PropertyType.GetElementType().Assembly == Assembly.GetExecutingAssembly()))
                 {
@@ -111,8 +110,8 @@ namespace JsonUtil.Base
             }
 
             // remove last comma
-            if (r[r.Length - 1] == ',')
-                r = r.Substring(0, r.Length - 1);
+            r = r.Substring(0, r.Length - 1);
+
             r = r + "}";
 
             return r;
@@ -131,57 +130,63 @@ namespace JsonUtil.Base
             {
                 // get value by specific key
                 string part = StringUtils.GetJsonValue(prop.Name, s);
-
-                if (prop.PropertyType.IsArray)
+                if ("null".Equals(part, StringComparison.CurrentCultureIgnoreCase))
                 {
-                    string[] lst = part.Split(',');
-                    Array arr = Array.CreateInstance(prop.PropertyType.GetElementType(), lst.Length);
-
-                    if (prop.PropertyType.GetElementType().Assembly != Assembly.GetExecutingAssembly())
-                    {
-                        // system-defined type needs encoder
-                        Encodec _encodec = GetCodec<Encodec>(prop.PropertyType);
-                        for (int i = 0; i < lst.Length; i++)
-                        {
-                            var value = typeof(Encodec).GetMethod("Convert", new Type[] { typeof(string) })
-                                    .MakeGenericMethod(prop.PropertyType.GetElementType())
-                                    .Invoke(_encodec, new object[] { lst[i] });
-                            arr.SetValue(value, i);
-                        }
-
-                        prop.SetValue(obj, arr, null);
-                    }
-                    else
-                    {
-                        // not system-defined type
-                        for (int i = 0; i < lst.Length; i++)
-                        {
-                            var value = typeof(Factory).GetMethod("Parse", new Type[] { typeof(string) })
-                                    .MakeGenericMethod(prop.PropertyType.GetElementType())
-                                    .Invoke(this, new object[] { lst[i] });
-                            arr.SetValue(value, i);
-                        }
-                        prop.SetValue(obj, arr, null);
-                    }
-                }
-                else if (prop.PropertyType.Assembly == Assembly.GetExecutingAssembly())
-                {
-                    // not system defined type
-                    prop.SetValue(obj,
-                                    typeof(Factory).GetMethod("Parse", new Type[] { typeof(string) })
-                                        .MakeGenericMethod(prop.PropertyType)
-                                        .Invoke(this, new object[] { part }),
-                                    null);
-
+                    prop.SetValue(obj, null);
                 }
                 else
                 {
-                    Encodec _encodec = GetCodec<Encodec>(prop.PropertyType);
+                    if (prop.PropertyType.IsArray)
+                    {
+                        string[] lst = part.Split(new[] {',', ' '}, StringSplitOptions.RemoveEmptyEntries);
+                        Array arr = Array.CreateInstance(prop.PropertyType.GetElementType(), lst.Length);
 
-                    var value = typeof(Encodec).GetMethod("Convert", new Type[] { typeof(string) })
-                                .MakeGenericMethod(prop.PropertyType)
-                                .Invoke(_encodec, new object[] { part });
-                    prop.SetValue(obj, value, null);
+                        if (prop.PropertyType.GetElementType().Assembly != Assembly.GetExecutingAssembly())
+                        {
+                            // system-defined type needs encoder
+                            Encodec _encodec = GetCodec<Encodec>(prop.PropertyType);
+                            for (int i = 0; i < lst.Length; i++)
+                            {
+                                var value = typeof(Encodec).GetMethod("Convert", new Type[] { typeof(string) })
+                                        .MakeGenericMethod(prop.PropertyType.GetElementType())
+                                        .Invoke(_encodec, new object[] { lst[i] });
+                                arr.SetValue(value, i);
+                            }
+
+                            prop.SetValue(obj, arr, null);
+                        }
+                        else
+                        {
+                            // not system-defined type
+                            for (int i = 0; i < lst.Length; i++)
+                            {
+                                var value = typeof(Factory).GetMethod("Parse", new Type[] { typeof(string) })
+                                        .MakeGenericMethod(prop.PropertyType.GetElementType())
+                                        .Invoke(this, new object[] { lst[i] });
+                                arr.SetValue(value, i);
+                            }
+                            prop.SetValue(obj, arr, null);
+                        }
+                    }
+                    else if (prop.PropertyType.Assembly == Assembly.GetExecutingAssembly())
+                    {
+                        // not system defined type
+                        prop.SetValue(obj,
+                                        typeof(Factory).GetMethod("Parse", new Type[] { typeof(string) })
+                                            .MakeGenericMethod(prop.PropertyType)
+                                            .Invoke(this, new object[] { part }),
+                                        null);
+
+                    }
+                    else
+                    {
+                        Encodec _encodec = GetCodec<Encodec>(prop.PropertyType);
+
+                        var value = typeof(Encodec).GetMethod("Convert", new Type[] { typeof(string) })
+                                    .MakeGenericMethod(prop.PropertyType)
+                                    .Invoke(_encodec, new object[] { part });
+                        prop.SetValue(obj, value, null);
+                    }
                 }
             }
             return obj;

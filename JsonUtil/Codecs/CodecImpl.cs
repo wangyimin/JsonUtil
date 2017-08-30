@@ -9,8 +9,9 @@ namespace JsonUtil.Codecs
         {
             if (obj == null)
             {
-                throw new ArgumentNullException(nameof(obj));
+                return "null";
             }
+
             if (obj is string)
             {
                 return "\"" + obj + "\"";
@@ -50,7 +51,7 @@ namespace JsonUtil.Codecs
         {
             if (typeof(T) == typeof(string))
             {
-                return (T)System.Convert.ChangeType(s, typeof(string));
+                return (T)System.Convert.ChangeType(s.Substring(1, s.Length - 2), typeof(string));
             }
             else if (typeof(T) == typeof(Int32))
             {
@@ -58,7 +59,7 @@ namespace JsonUtil.Codecs
             }
             else if (typeof(T) == typeof(DateTime))
             {
-                return (T)System.Convert.ChangeType(DateTime.Parse(s), typeof(DateTime));
+                return (T)System.Convert.ChangeType(DateTime.Parse(s.Substring(1, s.Length - 2)), typeof(DateTime));
             }
             else
             {

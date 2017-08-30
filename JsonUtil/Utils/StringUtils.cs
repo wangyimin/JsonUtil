@@ -16,14 +16,14 @@ namespace JsonUtil.Utils
                 throw new ArgumentNullException("Null parameter.");
             }
 
-            Regex regex = new Regex("(?<key>" + key + "\\s*:\\s*)(?<value>.+)");
-            MatchCollection mc = regex.Matches(s);
+            MatchCollection mc = new Regex("(?<key>" + key + "\\s*:\\s*)(?<value>.+)").Matches(s);
 
-            string r = mc[0].Groups["value"].Value?? null;
+            string r = mc.Count > 0 ? mc[0].Groups["value"].Value : null;
 
             if ("\"".Equals(r.Substring(0, 1)))
             {
-                return split(r, '\"', '\"');
+                mc = Regex.Matches(r, "\"([^\"]*)\"");
+                return mc.Count > 0 ? mc[0].ToString() : throw new InvalidOperationException("The number of start/end mark is unmatched.");
             }
             else if ("{".Equals(r.Substring(0, 1)))
             {
@@ -35,7 +35,7 @@ namespace JsonUtil.Utils
             }
             else
             {
-                return r;
+                return r.IndexOf(",") < 0 ? r : r = r.Substring(0, r.IndexOf(","));
             }
         }
 

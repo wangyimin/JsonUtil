@@ -24,6 +24,7 @@ namespace JsonUtil
             P p = new P();
             p.birthdate = DateTime.Today;
             p.name = new string[] { "Wang", "Li" };
+            //p.name = null;
             p.age = 21;
             
             S s = new S();
@@ -33,9 +34,17 @@ namespace JsonUtil
 
             string r = f.stringify(p);
             Trace.WriteLine(r);
-            
+
+            //string str = "{ s:[{ name: \"WL\"}],birthdate: \"2017/08/29 0:00:00\",name: null,age: 21}";
+            //Regex regex = new Regex("(?<key>name\\s*:\\s*)(?<value>(\\S*))");
+            //MatchCollection mc = regex.Matches(str);
+
+            //string r1 = mc[0].Groups["value"].Value ?? null;
+
+            //Trace.WriteLine(StringUtils.GetJsonValue("name", str));
+
             r = r.Substring(1, r.Length - 2);
-             P reverse = f.Parse<P>(r);
+            P reverse = f.Parse<P>(r);
             Trace.WriteLine("End");
         }
     }
