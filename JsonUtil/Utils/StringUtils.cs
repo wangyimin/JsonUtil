@@ -16,7 +16,7 @@ namespace JsonUtil.Utils
                 throw new ArgumentNullException("Null parameter.");
             }
 
-            MatchCollection mc = new Regex("(?<key>" + key + "\\s*:\\s*)(?<value>.+)").Matches(s);
+            MatchCollection mc = new Regex("(?<key>\"" + key + "\"\\s*:\\s*)(?<value>.+)").Matches(s);
 
             string r = mc.Count > 0 ? mc[0].Groups["value"].Value : null;
 

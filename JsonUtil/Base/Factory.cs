@@ -90,7 +90,7 @@ namespace JsonUtil.Base
                 {
                     // array type and not system-defined type
                     Array arr = (Array)prop.GetValue(obj, null);
-                    r = r + prop.Name + ":";
+                    r = r + "\"" + prop.Name + "\":";
                     foreach (var el in arr)
                     {
                         r = r + "[" + stringify(el) + "],";
@@ -99,13 +99,13 @@ namespace JsonUtil.Base
                 else if (prop.PropertyType.Assembly == Assembly.GetExecutingAssembly())
                 {
                     // not system-defined type
-                    r = r + prop.Name + ":" + stringify(prop.GetValue(obj)) + ",";
+                    r = r + "\"" + prop.Name + "\":" + stringify(prop.GetValue(obj)) + ",";
                 }
                 else
                 {
                     Decodec _decodec = GetCodec<Decodec>(prop.PropertyType);
 
-                    r = r + prop.Name + ":" + _decodec.Convert(prop.GetValue(obj, null)) + ",";
+                    r = r + "\"" + prop.Name + "\":" + _decodec.Convert(prop.GetValue(obj, null)) + ",";
                 }
             }
 
