@@ -84,7 +84,7 @@ namespace JsonUtil.Base
                             .MakeGenericMethod(prop.PropertyType)
                             .Invoke(this, new object[] { impl });
                 }
-                if ((prop.PropertyType.IsGenericType && typeof(IEnumerable<object>).IsAssignableFrom(prop.PropertyType))
+                if ((prop.PropertyType.IsGenericType && typeof(System.Collections.IEnumerable).IsAssignableFrom(prop.PropertyType))
                     || prop.PropertyType.IsArray)
                 {
                     //collection type
@@ -93,7 +93,7 @@ namespace JsonUtil.Base
                     {
                         // not system-defined type
                         r = r + "\"" + prop.Name + "\":";
-                        foreach (var el in prop.GetValue(obj, null) as IEnumerable<object>)
+                        foreach (var el in prop.GetValue(obj, null) as System.Collections.IEnumerable)
                         {
                             r = r + "[" + stringify(el) + "],";
                         }
@@ -102,7 +102,7 @@ namespace JsonUtil.Base
                     {
                         // system-defined type
                         r = r + "\"" + prop.Name + "\":[";
-                        foreach (var el in prop.GetValue(obj, null) as IEnumerable<object>)
+                        foreach (var el in prop.GetValue(obj, null) as System.Collections.IEnumerable)
                         {
                             Decodec _decodec = GetCodec<Decodec>(type);
                             r = r + _decodec.Convert(el) + ",";
@@ -142,7 +142,7 @@ namespace JsonUtil.Base
             foreach (PropertyInfo prop in obj.GetType().GetProperties())
             {
                 // get value by specific key
-                string part = StringUtils.GetJsonValue(prop.Name, s);
+                string part = StringUtils.GetJsonValue(prop.Name, ref s);
                 if ("null".Equals(part, StringComparison.CurrentCultureIgnoreCase))
                 {
                     prop.SetValue(obj, null);
@@ -180,6 +180,7 @@ namespace JsonUtil.Base
                                 lst.Add(value);
                             }
                         }
+
                         if (prop.PropertyType.IsArray)
                         {
                             Array arr = Array.CreateInstance(prop.PropertyType.GetElementType(), lst.Count);
@@ -199,7 +200,6 @@ namespace JsonUtil.Base
                                             .MakeGenericMethod(prop.PropertyType)
                                             .Invoke(this, new object[] { part }),
                                         null);
-
                     }
                     else
                     {
