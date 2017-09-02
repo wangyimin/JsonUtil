@@ -84,19 +84,33 @@ namespace JsonUtil.Base
                             .MakeGenericMethod(prop.PropertyType)
                             .Invoke(this, new object[] { impl });
                 }
-
-                if (prop.PropertyType.IsArray
-                    && (prop.PropertyType.GetElementType().Assembly == Assembly.GetExecutingAssembly()))
+                if ((prop.PropertyType.IsGenericType && typeof(IEnumerable<object>).IsAssignableFrom(prop.PropertyType))
+                    || prop.PropertyType.IsArray)
                 {
-                    // array type and not system-defined type
-                    Array arr = (Array)prop.GetValue(obj, null);
-                    r = r + "\"" + prop.Name + "\":";
-                    foreach (var el in arr)
+                    //collection type
+                    Type type = prop.PropertyType.GetElementType() ?? prop.PropertyType.GetGenericArguments().Single();
+                    if (IsSystemType(type))
                     {
-                        r = r + "[" + stringify(el) + "],";
+                        // not system-defined type
+                        r = r + "\"" + prop.Name + "\":";
+                        foreach (var el in prop.GetValue(obj, null) as IEnumerable<object>)
+                        {
+                            r = r + "[" + stringify(el) + "],";
+                        }
+                    }
+                    else
+                    {
+                        // system-defined type
+                        r = r + "\"" + prop.Name + "\":[";
+                        foreach (var el in prop.GetValue(obj, null) as IEnumerable<object>)
+                        {
+                            Decodec _decodec = GetCodec<Decodec>(type);
+                            r = r + _decodec.Convert(el) + ",";
+                        }
+                        r = r.Substring(0, r.Length-1) + "],";
                     }
                 }
-                else if (prop.PropertyType.Assembly == Assembly.GetExecutingAssembly())
+                else if (IsSystemType(prop.PropertyType))
                 {
                     // not system-defined type
                     r = r + "\"" + prop.Name + "\":" + stringify(prop.GetValue(obj)) + ",";
@@ -104,7 +118,6 @@ namespace JsonUtil.Base
                 else
                 {
                     Decodec _decodec = GetCodec<Decodec>(prop.PropertyType);
-
                     r = r + "\"" + prop.Name + "\":" + _decodec.Convert(prop.GetValue(obj, null)) + ",";
                 }
             }
@@ -136,39 +149,49 @@ namespace JsonUtil.Base
                 }
                 else
                 {
-                    if (prop.PropertyType.IsArray)
+                    if (prop.PropertyType.IsArray || prop.PropertyType.IsGenericType)
                     {
-                        string[] lst = part.Split(new[] {',', ' '}, StringSplitOptions.RemoveEmptyEntries);
-                        Array arr = Array.CreateInstance(prop.PropertyType.GetElementType(), lst.Length);
+                        string[] el = part.Split(new[] {',', ' '}, StringSplitOptions.RemoveEmptyEntries);
 
-                        if (prop.PropertyType.GetElementType().Assembly != Assembly.GetExecutingAssembly())
+                        Type type = prop.PropertyType.GetElementType() ?? prop.PropertyType.GetGenericArguments().Single();
+
+                        System.Collections.IList lst = (System.Collections.IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(type));
+
+                        if (!IsSystemType(type))
                         {
                             // system-defined type needs encoder
-                            Encodec _encodec = GetCodec<Encodec>(prop.PropertyType);
-                            for (int i = 0; i < lst.Length; i++)
+                            Encodec _encodec = GetCodec<Encodec>(type);
+                            for (int i = 0; i < el.Length; i++)
                             {
                                 var value = typeof(Encodec).GetMethod("Convert", new Type[] { typeof(string) })
-                                        .MakeGenericMethod(prop.PropertyType.GetElementType())
-                                        .Invoke(_encodec, new object[] { lst[i] });
-                                arr.SetValue(value, i);
+                                        .MakeGenericMethod(type)
+                                        .Invoke(_encodec, new object[] { el[i] });
+                                lst.Add(value);
                             }
-
-                            prop.SetValue(obj, arr, null);
                         }
                         else
                         {
                             // not system-defined type
-                            for (int i = 0; i < lst.Length; i++)
+                            for (int i = 0; i < el.Length; i++)
                             {
                                 var value = typeof(Factory).GetMethod("Parse", new Type[] { typeof(string) })
-                                        .MakeGenericMethod(prop.PropertyType.GetElementType())
-                                        .Invoke(this, new object[] { lst[i] });
-                                arr.SetValue(value, i);
+                                        .MakeGenericMethod(type)
+                                        .Invoke(this, new object[] { el[i] });
+                                lst.Add(value);
                             }
+                        }
+                        if (prop.PropertyType.IsArray)
+                        {
+                            Array arr = Array.CreateInstance(prop.PropertyType.GetElementType(), lst.Count);
+                            lst.CopyTo(arr, 0);
                             prop.SetValue(obj, arr, null);
                         }
+                        else
+                        {
+                            prop.SetValue(obj, lst, null);
+                        }
                     }
-                    else if (prop.PropertyType.Assembly == Assembly.GetExecutingAssembly())
+                    else if (IsSystemType(prop.PropertyType))
                     {
                         // not system defined type
                         prop.SetValue(obj,
@@ -191,5 +214,8 @@ namespace JsonUtil.Base
             }
             return obj;
         }
+
+        private bool IsSystemType(Type type) =>
+            type.Assembly == Assembly.GetExecutingAssembly();
     }
 }

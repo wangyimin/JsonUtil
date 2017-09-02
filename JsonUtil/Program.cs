@@ -24,6 +24,7 @@ namespace JsonUtil
             P p = new P();
             p.birthdate = DateTime.Today;
             p.name = new string[] { "Wang", "Li" };
+            //p.name = new List<string> { "Wang", "Li" };
             //p.name = null;
             p.age = 21;
             
@@ -31,6 +32,7 @@ namespace JsonUtil
             s.name = "WL";
             //p.s = s;
             p.s = new S[] { s };
+            //p.s = new List<S>() { s };
 
             string r = f.stringify(p);
             Trace.WriteLine(r);
