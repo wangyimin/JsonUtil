@@ -19,7 +19,7 @@ namespace JsonUtil.Utils
             if ("\"".Equals(r.Substring(0, 1)))
             {
                 mc = Regex.Matches(r, "\"([^\"]*)\"");
-                r =  mc.Count > 0 ? mc[0].ToString() : throw new InvalidOperationException("The number of start/end mark is unmatched.");
+                r = mc.Count > 0 ? mc[0].ToString() : throw new InvalidOperationException("The number of start/end mark is unmatched.");
                 part = part + r;
             }
             else if ("{".Equals(r.Substring(0, 1)))

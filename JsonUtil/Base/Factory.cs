@@ -36,7 +36,7 @@ namespace JsonUtil.Base
                 throw new InvalidOperationException("Unsupport return type[" + typeof(T) + "]");
             }
 
-            return (T)(_codec??throw new InvalidOperationException("Not found type[" + type.Name + "]"));
+            return (T)(_codec ?? throw new InvalidOperationException("Not found type[" + type.Name + "]"));
         }
 
         public void Builder<T>(object codec)
@@ -92,11 +92,13 @@ namespace JsonUtil.Base
                     if (IsSystemType(type))
                     {
                         // not system-defined type
-                        r = r + "\"" + prop.Name + "\":";
+                        r = r + "\"" + prop.Name + "\":[";
                         foreach (var el in prop.GetValue(obj, null) as System.Collections.IEnumerable)
                         {
-                            r = r + "[" + stringify(el) + "],";
+                            r = r + stringify(el) + ",";
                         }
+                        r = r.Substring(0, r.Length - 1);
+                        r = r + "],";
                     }
                     else
                     {
@@ -107,7 +109,7 @@ namespace JsonUtil.Base
                             Decodec _decodec = GetCodec<Decodec>(type);
                             r = r + _decodec.Convert(el) + ",";
                         }
-                        r = r.Substring(0, r.Length-1) + "],";
+                        r = r.Substring(0, r.Length - 1) + "],";
                     }
                 }
                 else if (IsSystemType(prop.PropertyType))
@@ -151,8 +153,6 @@ namespace JsonUtil.Base
                 {
                     if (prop.PropertyType.IsArray || prop.PropertyType.IsGenericType)
                     {
-                        string[] el = part.Split(new[] {',', ' '}, StringSplitOptions.RemoveEmptyEntries);
-
                         Type type = prop.PropertyType.GetElementType() ?? prop.PropertyType.GetGenericArguments().Single();
 
                         System.Collections.IList lst = (System.Collections.IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(type));
@@ -160,6 +160,8 @@ namespace JsonUtil.Base
                         if (!IsSystemType(type))
                         {
                             // system-defined type needs encoder
+                            string[] el = part.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
                             Encodec _encodec = GetCodec<Encodec>(type);
                             for (int i = 0; i < el.Length; i++)
                             {
@@ -172,6 +174,8 @@ namespace JsonUtil.Base
                         else
                         {
                             // not system-defined type
+                            string[] el = part.Split(new[] { '}', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
                             for (int i = 0; i < el.Length; i++)
                             {
                                 var value = typeof(Factory).GetMethod("Parse", new Type[] { typeof(string) })
