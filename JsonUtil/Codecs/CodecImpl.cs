@@ -24,23 +24,6 @@ namespace JsonUtil.Codecs
             {
                 return "\"" + ((DateTime)(object)obj).ToString("yyyy/MM/dd") + "\"";
             }
-            else if (obj is Array)
-            {
-                var arr = obj as Array;
-                string r = "[";
-                foreach (var el in arr)
-                {
-                    r = r + Convert(el) + ", ";
-                }
-                if (r.Length > 1)
-                {
-                    r = r.Substring(0, r.Length - 2);
-                }
-
-                r = r + "]";
-
-                return r;
-            }
             else
             {
                 throw new InvalidOperationException("Unsupport object type["

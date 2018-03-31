@@ -20,24 +20,23 @@ namespace JsonUtil
         {
             Factory f = new Factory();
             f.Builder();
-
+            
             P p = new P();
             p.birthdate = DateTime.Today;
             p.name = new string[] { "Wang", "Li" };
+            //p.name = new List<string> { "Wang", "Li" };
+            //p.name = null;
             p.age = 21;
             
-            S s1 = new S();
-            s1.name = "WL1";
-            s1.date = DateTime.Today;
-
-            S s2 = new S();
-            s2.name = "WL2";
-            s2.date = DateTime.Today;
-            p.s = new S[] { s1, s2 };
+            S s = new S();
+            s.name = "WL";
+            //p.s = s;
+            p.s = new S[] { s };
+            //p.s = new List<S>() { s };
 
             string r = f.stringify(p);
             Trace.WriteLine(r);
-            
+
             r = r.Substring(1, r.Length - 2);
             P reverse = f.Parse<P>(r);
             Trace.WriteLine("End");

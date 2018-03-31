@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 
 namespace JsonUtil.Utils
@@ -17,30 +13,35 @@ namespace JsonUtil.Utils
             }
 
             MatchCollection mc = new Regex("(?<key>\"" + key + "\"\\s*:\\s*)(?<value>.+)").Matches(s);
+            string part = mc.Count > 0 ? mc[0].Groups["key"].Value : throw new InvalidOperationException("No found specific key[" + key + "]");
+            string r = mc[0].Groups["value"].Value;
 
-            string part = mc.Count > 0 ? mc[0].Groups["value"].Value : null;
-
-            if ("\"".Equals(part.Substring(0, 1)))
+            if ("\"".Equals(r.Substring(0, 1)))
             {
-                mc = Regex.Matches(part, "\"([^\"]*)\"");
-                return mc.Count > 0 ? mc[0].ToString() : throw new InvalidOperationException("The number of start/end mark is unmatched.");
+                mc = Regex.Matches(r, "\"([^\"]*)\"");
+                r =  mc.Count > 0 ? mc[0].ToString() : throw new InvalidOperationException("The number of start/end mark is unmatched.");
+                part = part + r;
             }
-            else if ("{".Equals(part.Substring(0, 1)))
+            else if ("{".Equals(r.Substring(0, 1)))
             {
-                string r = split(part, '{', '}');
-                s = new Regex("\"" + Regex.Escape(key) + "\"\\s*:\\s*" + Regex.Escape("{" + r + "}") + "\\,").Replace(s, "");
-                return r;
+                r = split(r, '{', '}');
+                part = part + r;
+                r = r.Substring(1, r.Length - 2);
             }
-            if ("[".Equals(part.Substring(0, 1)))
+            if ("[".Equals(r.Substring(0, 1)))
             {
-                string r = split(part, '[', ']');
-                s = new Regex("\"" + Regex.Escape(key) + "\"\\s*:\\s*" + Regex.Escape("[" + r + "]") + "\\,").Replace(s, "");
-                return r;
+                r = split(r, '[', ']');
+                part = part + r;
+                r = r.Substring(1, r.Length - 2);
             }
             else
             {
-                return part.IndexOf(",") < 0 ? part : part = part.Substring(0, part.IndexOf(","));
+                r = r.IndexOf(",") < 0 ? r : r = r.Substring(0, r.IndexOf(","));
+                part = part + r;
             }
+
+            s = s.Replace(part, "");
+            return r;
         }
 
         private static string split(string s, char start, char end)
@@ -50,23 +51,22 @@ namespace JsonUtil.Utils
                 throw new ArgumentNullException(nameof(s));
             }
 
-            Stack<string> stack = new Stack<string>();
-            stack.Push("*");
+            int num = 1;
 
             for (int i = 1; i < s.Length; i++)
             {
                 char el = s[i];
                 if (end.Equals(el))
                 {
-                    stack.Pop();
-                    if (stack.Count == 0)
+                    num--;
+                    if (num == 0)
                     {
-                        return s.Substring(1, i - 1);
+                        return s.Substring(0, i + 1);
                     }
                 }
                 else if (start.Equals(el))
                 {
-                    stack.Push("*");
+                    num++;
                 }
                 else
                 {
