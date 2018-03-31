@@ -40,7 +40,9 @@ namespace JsonUtil.Utils
                 part = part + r;
             }
 
-            s = s.Replace(part, "");
+            //s = s.Replace(part, "");
+            s = new Regex(Regex.Escape(part) + "\\,*").Replace(s, "");
+            
             return r;
         }
 
